@@ -35,7 +35,7 @@ for city in cities:
 		
 		time.sleep(5)
 		for office, number, street, city, state, code in zip(officeNameList, officeTelephone, streetAddressList, addressLocalityList, addressRegionList, postalCodeList):
-            agentContactInfo.append(office.getText())
+            		agentContactInfo.append(office.getText())
 			agentContactInfo.append(number.getText())
 			agentContactInfo.append(street.getText())
 			agentContactInfo.append(city.getText())
