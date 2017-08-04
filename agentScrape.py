@@ -1,5 +1,3 @@
-# works temp and packages each list together
-
 import openpyxl as xl
 import webbrowser
 import requests
@@ -7,43 +5,50 @@ import bs4
 import time
 import pandas as pd
 
-agentContactInfo = []
 
 #currently testing Ohio
-stateAbbrev = 'oh'
+state2 = 'oh'
 
 #currently manually entering list of cities
-cities = ['akron','canton','cincinnati','cleveland','columbus','toledo','dayton','youngstown']
+cities = ['akron','canton']#,'cincinnati']#,'cleveland','columbus','toledo','dayton','findlay','toledo','youngstown']
+
+# Blank list used to create list and list of lists, which will eventually be put into dataframe
+allAgentContactInfo = []
 agentContactInfo = []
-cityOhParsedList = []
 
 #loop thru cities in list
 for city in cities:
-	siteWithCity = 'http://agent.franchiseSite.com/' + city + '-oh?page='
-	# need to incorporate a variable for amount of pages
-	
+	siteWithCity = 'http://agency.nationwide.com/' + city + '-oh?page='
+
 	#loop thru pages of each city
-	for page in range(1,3):
-        CityOh = requests.get(siteWithCity + str(page))
-        soupCityOh = bs4.BeautifulSoup(cityOh.content, 'html.parser')
-		officeNameList = list(soupCityOh.find_all('h3', itemprop="name"))
-		officeTelephone = soupCityOh.find_all('strong', itemprop="telephone")
-		streetAddressList = soupCityOh.find_all('div', itemprop="streetAddress")
-		addressLocalityList = soupCityOh.find_all('span', itemprop="addressLocality")
-		addressRegionList = soupCityOh.find_all('span', itemprop="addressRegion")
-		postalCodeList = soupCityOh.find_all('span', itemprop="postalCode")
-		
-		time.sleep(5)
-		for office, number, street, city, state, code in zip(officeNameList, officeTelephone, streetAddressList, addressLocalityList, addressRegionList, postalCodeList):
-            		agentContactInfo.append(office.getText())
-			agentContactInfo.append(number.getText())
-			agentContactInfo.append(street.getText())
-			agentContactInfo.append(city.getText())
-			agentContactInfo.append(state.getText())
-			agentContactInfo.append(code.getText())
+	for page in range(1,10):
+		citiesRequest = requests.get(siteWithCity + str(page))
+		citiesBs = bs4.BeautifulSoup(citiesRequest.content, 'html.parser')
+		officeNameList = list(citiesBs.find_all('span', itemprop="name"))
+		officeNameList2 = citiesBs.find_all('span', itemprop="name")
+		officeTelephone = citiesBs.find_all('strong', itemprop="telephone")
+		streetAddressList = citiesBs.find_all('div', itemprop="streetAddress")
+		addressLocalityList = citiesBs.find_all('span', itemprop="addressLocality")
+		addressRegionList = citiesBs.find_all('span', itemprop="addressRegion")
+		postalCodeList = citiesBs.find_all('span', itemprop="postalCode")
+		time.sleep(4)
+
+
+		for name, name2, telephone, address, locality, state, zipCode in zip(officeNameList2[::2], officeNameList2[1::2], officeTelephone, streetAddressList, addressLocalityList, addressRegionList, postalCodeList):
+			#had to adjust the tags and find way to remove \n's
+			agentContactInfo.append(str(name.getText()).replace('\n',''))
 			
-			#append each agent's contact info and then clear list and grab next agent's info to append and so on
-			cityOhParsedList.append(agentContactInfo)
+			#adding office name
+			agentContactInfo.append(name2.getText())
+			agentContactInfo.append(telephone.getText())
+			agentContactInfo.append(address.getText())
+			agentContactInfo.append(locality.getText())
+			agentContactInfo.append(state.getText())
+			agentContactInfo.append(zipCode.getText())
+			
+			#append each agent's info to the list of lists and then clear for next agent
+			allAgentContactInfo.append(agentContactInfo)
 			agentContactInfo = []
 
-pd.DataFrame(cityOhParsedList).to_csv('scrape-' + stateAbbrev +'.csv')
+print(allAgentContactInfo)
+pd.DataFrame(allAgentContactInfo).to_csv('scrapeOh11.csv')
